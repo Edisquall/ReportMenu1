@@ -4,6 +4,8 @@
  */
 package reportmenu;
 
+import java.sql.SQLException;
+
 /**
  *
  * @author Edi
@@ -14,7 +16,11 @@ public class ReportMenu {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-        // TODO code application logic here
+//        Scanner scanner = new Scanner(System.in);  
+        try {
+            DBConnector.getConnection();
+        } catch (SQLException e) {
+            System.out.println("Failed to connect to MySQL: " + e.getMessage());
+        }
     }
-    
 }
