@@ -16,6 +16,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Scanner;
+import java.sql.ResultSetMetaData;
 
 /**
  *
@@ -27,36 +28,44 @@ public class ReportMenu {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-//        Reports reports = new Reports();
+        Connection connection = null; // Declare connection variable
         Scanner scanner = new Scanner(System.in);
 
-        while (true) {
-            System.out.println("Options:");
-            System.out.println("1. Perform action 1");
-            System.out.println("2. Connect to MySQL");
-            System.out.println("3. Exit");
-            System.out.print("Enter your choice: ");
-            int choice = scanner.nextInt();
+        try {
+            while (true) {
+                System.out.println("Options:");
+                System.out.println("1. Generate Reports");
+                System.out.println("2. Connect to MySQL");
+                System.out.println("3. Exit");
+                System.out.print("Enter your choice: ");
+                int choice = scanner.nextInt();
 
-            switch (choice) {
-                case 1:
-                    performAction1(scanner);
-                    break;
-                case 2:
-                    connectToMySQL();
-                    break;
-                case 3:
-                    System.out.println("Exiting...");
-                    System.exit(0);
-                default:
-                    System.out.println("Invalid choice. Please enter a valid option.");
+                switch (choice) {
+                    case 1:
+                        generateReports(scanner);
+                        break;
+                    case 2:
+                        connection = connectToMySQL(); // Assign connection
+                        break;
+                    case 3:
+                        System.out.println("Exiting...");
+                        System.exit(0);
+                    default:
+                        System.out.println("Invalid choice. Please enter a valid option.");
+                }
+            }
+        } finally {
+            if (connection != null) {
+                try {
+                    connection.close();
+                } catch (SQLException e) {
+                    System.out.println("Error closing connection: " + e.getMessage());
+                }
             }
         }
-
-        connection.close();
     }
 
-    private static void performAction1(Scanner scanner) {
+    private static void generateReports(Scanner scanner) {
         System.out.println("Choose a report:");
         System.out.println("1. Course Report");
         System.out.println("2. Student Report");
@@ -66,7 +75,7 @@ public class ReportMenu {
 
         switch (reportChoice) {
             case 1:
-                generateReport("course", scanner);
+                generateReport("courses", scanner);
                 break;
             case 2:
                 generateReport("student", scanner);
@@ -88,7 +97,7 @@ public class ReportMenu {
         int outputChoice = scanner.nextInt();
 
         try {
-            Connection connection = DriverManager.getConnection(URL, USERNAME, PASSWORD);
+            Connection connection = DBConnector.getConnection();
             Statement statement = connection.createStatement();
             ResultSet resultSet = statement.executeQuery("SELECT * FROM " + tableName);
 
@@ -116,9 +125,27 @@ public class ReportMenu {
 
     private static void generateTextFile(ResultSet resultSet, String tableName) {
         try ( PrintWriter writer = new PrintWriter(new FileWriter(tableName + "_report.txt"))) {
+            ResultSetMetaData metaData = resultSet.getMetaData();
+            int columnCount = metaData.getColumnCount();
+
+            // Write header
+            for (int i = 1; i <= columnCount; i++) {
+                writer.print(metaData.getColumnName(i));
+                if (i < columnCount) {
+                    writer.print("\t");
+                }
+            }
+            writer.println();
+
+            // Write data
             while (resultSet.next()) {
-                // Customize this part based on your table structure
-                writer.println(resultSet.getString("column_name1") + "\t" + resultSet.getString("column_name2"));
+                for (int i = 1; i <= columnCount; i++) {
+                    writer.print(resultSet.getString(i));
+                    if (i < columnCount) {
+                        writer.print("\t");
+                    }
+                }
+                writer.println();
             }
             System.out.println("Text file generated successfully.");
         } catch (IOException | SQLException e) {
@@ -128,10 +155,13 @@ public class ReportMenu {
 
     private static void generateCSVFile(ResultSet resultSet, String tableName) {
         try ( PrintWriter writer = new PrintWriter(new FileWriter(tableName + "_report.csv"))) {
+            ResultSetMetaData metaData = resultSet.getMetaData();
+            int columnCount = metaData.getColumnCount();
+
             // Write header
-            for (int i = 1; i <= resultSet.getMetaData().getColumnCount(); i++) {
-                writer.print(resultSet.getMetaData().getColumnName(i));
-                if (i < resultSet.getMetaData().getColumnCount()) {
+            for (int i = 1; i <= columnCount; i++) {
+                writer.print(metaData.getColumnName(i));
+                if (i < columnCount) {
                     writer.print(",");
                 }
             }
@@ -139,9 +169,9 @@ public class ReportMenu {
 
             // Write data
             while (resultSet.next()) {
-                for (int i = 1; i <= resultSet.getMetaData().getColumnCount(); i++) {
+                for (int i = 1; i <= columnCount; i++) {
                     writer.print(resultSet.getString(i));
-                    if (i < resultSet.getMetaData().getColumnCount()) {
+                    if (i < columnCount) {
                         writer.print(",");
                     }
                 }
@@ -155,22 +185,39 @@ public class ReportMenu {
 
     private static void printConsoleOutput(ResultSet resultSet) {
         try {
+            ResultSetMetaData metaData = resultSet.getMetaData();
+            int columnCount = metaData.getColumnCount();
+
+            // Write header
+            for (int i = 1; i <= columnCount; i++) {
+                System.out.print(metaData.getColumnName(i));
+                if (i < columnCount) {
+                    System.out.print("\t");
+                }
+            }
+            System.out.println();
+
+            // Write data
             while (resultSet.next()) {
-                // Customize this part based on your table structure
-                System.out.println(resultSet.getString("column_name1") + "\t" + resultSet.getString("column_name2"));
+                for (int i = 1; i <= columnCount; i++) {
+                    System.out.print(resultSet.getString(i));
+                    if (i < columnCount) {
+                        System.out.print("\t");
+                    }
+                }
+                System.out.println();
             }
         } catch (SQLException e) {
             System.out.println("Failed to print console output: " + e.getMessage());
         }
     }
 
-    private static void connectToMySQL() {
+    private static Connection connectToMySQL() {
         try {
-            DBConnector.getConnection();
-            System.out.println("Connected to MySQL successfully!");
-//            connection.close();
+            return DBConnector.getConnection();
         } catch (SQLException e) {
             System.out.println("Failed to connect to MySQL: " + e.getMessage());
+            return null;
         }
     }
 }
