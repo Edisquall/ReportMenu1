@@ -1,34 +1,24 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Main.java to edit this template
- */
 package reportmenu;
 
-import java.sql.SQLException;
-import java.util.List;
-import java.util.Scanner;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.Scanner;
-import java.sql.ResultSetMetaData;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Scanner;
 
-/**
- *
- * @author Edi
- */
 public class ReportMenu {
 
     // Define user roles and their credentials
     private static Map<String, String> userCredentials = new HashMap<>();
     private static Map<String, String> userRoles = new HashMap<>();
+    private static String[][] users = new String[0][2];
 
     static {
         // Initially, only 'admin' exists with 'admin' role and password 'java'
@@ -119,23 +109,74 @@ public class ReportMenu {
                     switch (choice) {
                         case 1:
                             // Add User
-                            // Implement add user functionality
+                            System.out.print("Enter new user's name: ");
+                            String name = scanner.next();
+                            System.out.print("Enter new user's password: ");
+                            String newUserPassword = scanner.next();
+                            User newUser = new User(name, newUserPassword);
+                            users = Arrays.copyOf(users, users.length + 1);
+                            users[users.length - 1] = newUser;
+                            System.out.println("User added successfully.");
                             break;
                         case 2:
                             // Modify User
-                            // Implement modify user functionality
+                            System.out.print("Enter the username of the user to modify: ");
+                            String usernameToModify = scanner.next();
+                            int userIndexModify = findUser(users, usernameToModify);
+                            if (userIndexModify != -1) {
+                                System.out.print("Enter new username: ");
+                                String newUsername = scanner.next();
+                                users[userIndexModify][0] = newUsername;
+                                System.out.println("Username modified successfully.");
+                            } else {
+                                System.out.println("Username not found.");
+                            }
                             break;
                         case 3:
                             // Delete User
-                            // Implement delete user functionality
+                            System.out.print("Enter the username of the user to delete: ");
+                            String usernameToDelete = scanner.next();
+                            int userIndexDelete = findUser(users, usernameToDelete);
+                            if (userIndexDelete != -1) {
+                                String[][] newUsers = new String[users.length - 1][2];
+                                for (int i = 0, j = 0; i < users.length; i++) {
+                                    if (i != userIndexDelete) {
+                                        newUsers[j++] = users[i];
+                                    }
+                                }
+                                users = newUsers;
+                                System.out.println("User deleted successfully.");
+                            } else {
+                                System.out.println("User not found.");
+                            }
                             break;
                         case 4:
                             // Change Password
-                            // Implement change password functionality
+                            System.out.print("Enter the username of the user to change password: ");
+                            String usernameToChangePassword = scanner.next();
+                            int userIndexPassword = findUser(users, usernameToChangePassword);
+                            if (userIndexPassword != -1) {
+                                System.out.print("Enter new password: ");
+                                String newPassword = scanner.next();
+                                users[userIndexPassword][1] = newPassword;
+                                System.out.println("Password changed successfully.");
+                            } else {
+                                System.out.println("User not found.");
+                            }
                             break;
                         case 5:
                             // Change Username
-                            // Implement change username functionality
+                            System.out.print("Enter the username of the user to change username: ");
+                            String usernameToChangeUsername = scanner.next();
+                            int userIndexUsername = findUser(users, usernameToChangeUsername);
+                            if (userIndexUsername != -1) {
+                                System.out.print("Enter new username: ");
+                                String newUsername = scanner.next();
+                                users[userIndexUsername][0] = newUsername;
+                                System.out.println("Username changed successfully.");
+                            } else {
+                                System.out.println("User not found.");
+                            }
                             break;
                         case 6:
                             exit = true; // Logout
@@ -171,7 +212,7 @@ public class ReportMenu {
                             exit = true; // Logout
                             break;
                         default:
-                            System.out.println("Invalid choice. Please enter a valid option.");
+                            System.out.println("Invalid choice");
                     }
                     break;
                 case "Lecturer":
@@ -193,7 +234,9 @@ public class ReportMenu {
                             exit = true; // Logout
                             break;
                         default:
-                            System.out.println("Invalid choice. Please enter a valid option.");
+                            System.out.println(
+                                    "Invalid choice. Please enter a valid option."
+                            );
                     }
                     break;
             }
@@ -258,10 +301,10 @@ public class ReportMenu {
                 generateReport("courses", scanner);
                 break;
             case 2:
-                generateReport("student", scanner);
+                generateReport("students", scanner);
                 break;
             case 3:
-                generateReport("lecturer", scanner);
+                generateReport("lecturer", scanner); // corrected from "lecture" to "lecturer"
                 break;
             default:
                 System.out.println("Invalid choice. Please enter a valid option.");
@@ -279,7 +322,9 @@ public class ReportMenu {
         try {
             Connection connection = DBConnector.getConnection(); // Open connection
             Statement statement = connection.createStatement(); // Create stream for the data
-            ResultSet resultSet = statement.executeQuery("SELECT * FROM " + tableName); // Create SQL Query
+            ResultSet resultSet = statement.executeQuery(
+                    "SELECT * FROM " + tableName
+            ); // Create SQL Query
 
             switch (outputChoice) {
                 case 1:
@@ -304,7 +349,10 @@ public class ReportMenu {
     }
 
     private static void generateTextFile(ResultSet resultSet, String tableName) {
-        try ( PrintWriter writer = new PrintWriter(new FileWriter(tableName + "_report.txt"))) {
+        try (
+                 PrintWriter writer = new PrintWriter(
+                        new FileWriter(tableName + "_report.txt")
+                )) {
             ResultSetMetaData metaData = resultSet.getMetaData();
             int columnCount = metaData.getColumnCount();
 
@@ -334,7 +382,10 @@ public class ReportMenu {
     }
 
     private static void generateCSVFile(ResultSet resultSet, String tableName) {
-        try ( PrintWriter writer = new PrintWriter(new FileWriter(tableName + "_report.csv"))) {
+        try (
+                 PrintWriter writer = new PrintWriter(
+                        new FileWriter(tableName + "_report.csv")
+                )) {
             ResultSetMetaData metaData = resultSet.getMetaData();
             int columnCount = metaData.getColumnCount();
 
@@ -392,12 +443,40 @@ public class ReportMenu {
         }
     }
 
-    private static Connection connectToMySQL() {
-        try {
-            return DBConnector.getConnection();
-        } catch (SQLException e) {
-            System.out.println("Failed to connect to MySQL: " + e.getMessage());
-            return null;
+    public static int findUser(String[][] users, String username) {
+        for (int i = 0; i < users.length; i++) {
+            if (users[i][0].equals(username)) {
+                return i;
+            }
+        }
+        return -1;
+
+    }
+
+    class User {
+
+        private String username;
+        private String password;
+
+        public User(String username, String password) {
+            this.username = username;
+            this.password = password;
+        }
+
+        public String getUsername() {
+            return username;
+        }
+
+        public String getPassword() {
+            return password;
+        }
+
+        public void setUsername(String username) {
+            this.username = username;
+        }
+
+        public void setPassword(String password) {
+            this.password = password;
         }
     }
 }
