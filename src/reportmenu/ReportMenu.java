@@ -222,7 +222,7 @@ public class ReportMenu {
                         generateReports(scanner);
                         break;
                     case 2:
-                        userLogin(scanner); // Call user login function
+                        userLogin(scanner); // I want to call the login admin here
                         exit = true; // Exit the loop after successful login
                         break;
                     case 3:
