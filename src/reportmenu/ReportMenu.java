@@ -78,7 +78,9 @@ public class ReportMenu {
                     System.out.println("3. Delete User");
                     System.out.println("4. Change Password");
                     System.out.println("5. Change Username");
+                    // TODO: ADD THE OPTION TO SEE ALL THE USERS
                     System.out.println("6. Logout");
+                    // TODO: LOGOUT FUNCTION GIVES THE OPTION TO LOGIN AS ANOTHER USER INSTEAD OF CLOSING THE APP
                     break;
                 case "Office":
                     // Office menu
@@ -109,17 +111,20 @@ public class ReportMenu {
                     switch (choice) {
                         case 1:
                             // Add User
+                            // TODO: UPDATE THIS FUNCTION TO INCLUDE USER ROLE
                             System.out.print("Enter new user's name: ");
                             String name = scanner.next();
                             System.out.print("Enter new user's password: ");
                             String newUserPassword = scanner.next();
                             User newUser = new User(name, newUserPassword);
+                            String[] userData = {newUser.getUsername(), newUser.getPassword()};
                             users = Arrays.copyOf(users, users.length + 1);
-                            users[users.length - 1] = newUser;
+                            users[users.length - 1] = userData;
                             System.out.println("User added successfully.");
                             break;
                         case 2:
                             // Modify User
+                            // TODO: UPDATE THIS FUNCTION TO ADD THE USER ROLE INSTEAD OF MODIFYING USERNAME
                             System.out.print("Enter the username of the user to modify: ");
                             String usernameToModify = scanner.next();
                             int userIndexModify = findUser(users, usernameToModify);
@@ -453,11 +458,13 @@ public class ReportMenu {
 
     }
 
-    class User {
+    static class User {
 
         private String username;
         private String password;
+        private String role;
 
+        // TODO: UPDATE THIS CONSTRUCTOR SO THAT IT INCLUDES ROLE
         public User(String username, String password) {
             this.username = username;
             this.password = password;
@@ -478,5 +485,7 @@ public class ReportMenu {
         public void setPassword(String password) {
             this.password = password;
         }
+        
+        // TODO: CREATE GET AND SET ROLE FUNCTIONS
     }
 }
