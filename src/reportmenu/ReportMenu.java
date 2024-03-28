@@ -8,315 +8,90 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Scanner;
 
 public class ReportMenu {
 
-    // Define user roles and their credentials
-    private static Map<String, String> userCredentials = new HashMap<>();
-    private static Map<String, String> userRoles = new HashMap<>();
-    private static String[][] users = new String[0][2];
+    private static UserManager userManager = new UserManager();
+    private static ReportGenerator reportGenerator = new ReportGenerator();
 
-    static {
-        // Initially, only 'admin' exists with 'admin' role and password 'java'
-        userCredentials.put("admin", "java");
-        userRoles.put("admin", "Admin");
-    }
-
-    private static void initializeUserCredentials() {
-        // Add more initial users and roles if needed
-        userCredentials.put("office", "password");
-        userRoles.put("office", "Office");
-        userCredentials.put("lecturer", "password");
-        userRoles.put("lecturer", "Lecturer");
-    }
-
-    private static String currentUser;
-
-    private static void setCurrentUser(String username) {
-        currentUser = username;
-    }
-
-    private static String getCurrentUser() {
-        return currentUser;
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+        try {
+            while (true) {
+                userLogin(scanner);
+            }
+        } finally {
+            scanner.close();
+        }
     }
 
     private static void userLogin(Scanner scanner) {
-        initializeUserCredentials();
-
-        // Prompt for username and password
+        System.out.println("To login, please enter your details:");
         System.out.print("Enter username: ");
         String username = scanner.next();
         System.out.print("Enter password: ");
         String password = scanner.next();
 
-        // Validate credentials
-        if (userCredentials.containsKey(username) && userCredentials.get(username).equals(password)) {
-            setCurrentUser(username);
+        if (userManager.login(username, password)) {
             System.out.println("Login successful. Welcome, " + username + "!");
-            displayUserMenu(scanner); // After successful login, display the user menu
+            displayUserMenu(scanner);
         } else {
             System.out.println("Invalid username or password. Please try again.");
         }
     }
 
     private static void displayUserMenu(Scanner scanner) {
-        boolean exit = false;
-        while (!exit) {
-            String role = userRoles.get(getCurrentUser());
+        String role = userManager.getCurrentUserRole();
 
-            // Display menu based on user role
-            switch (role) {
-                case "Admin":
-                    // Admin menu
-                    System.out.println("Admin Menu:");
-                    System.out.println("1. Add User");
-                    System.out.println("2. Modify User");
-                    System.out.println("3. Delete User");
-                    System.out.println("4. Change Password");
-                    System.out.println("5. Change Username");
-                    // TODO: ADD THE OPTION TO SEE ALL THE USERS
-                    System.out.println("6. Logout");
-                    // TODO: LOGOUT FUNCTION GIVES THE OPTION TO LOGIN AS ANOTHER USER INSTEAD OF CLOSING THE APP
-                    break;
-                case "Office":
-                    // Office menu
-                    System.out.println("Office Menu:");
-                    System.out.println("1. Generate Course Report");
-                    System.out.println("2. Generate Student Report");
-                    System.out.println("3. Generate Lecturer Report");
-                    System.out.println("4. Change Password");
-                    System.out.println("5. Change Username");
-                    System.out.println("6. Logout");
-                    break;
-                case "Lecturer":
-                    // Lecturer menu
-                    System.out.println("Lecturer Menu:");
-                    System.out.println("1. Generate Lecturer Report");
-                    System.out.println("2. Change Password");
-                    System.out.println("3. Change Username");
-                    System.out.println("4. Logout");
-                    break;
-            }
-
-            System.out.print("Enter your choice: ");
-            int choice = scanner.nextInt();
-
-            switch (role) {
-                case "Admin":
-                    // Handle Admin menu options
-                    switch (choice) {
-                        case 1:
-                            // Add User
-                            // TODO: UPDATE THIS FUNCTION TO INCLUDE USER ROLE
-                            System.out.print("Enter new user's name: ");
-                            String name = scanner.next();
-                            System.out.print("Enter new user's password: ");
-                            String newUserPassword = scanner.next();
-                            User newUser = new User(name, newUserPassword);
-                            String[] userData = {newUser.getUsername(), newUser.getPassword()};
-                            users = Arrays.copyOf(users, users.length + 1);
-                            users[users.length - 1] = userData;
-                            System.out.println("User added successfully.");
-                            break;
-                        case 2:
-                            // Modify User
-                            // TODO: UPDATE THIS FUNCTION TO ADD THE USER ROLE INSTEAD OF MODIFYING USERNAME
-                            System.out.print("Enter the username of the user to modify: ");
-                            String usernameToModify = scanner.next();
-                            int userIndexModify = findUser(users, usernameToModify);
-                            if (userIndexModify != -1) {
-                                System.out.print("Enter new username: ");
-                                String newUsername = scanner.next();
-                                users[userIndexModify][0] = newUsername;
-                                System.out.println("Username modified successfully.");
-                            } else {
-                                System.out.println("Username not found.");
-                            }
-                            break;
-                        case 3:
-                            // Delete User
-                            System.out.print("Enter the username of the user to delete: ");
-                            String usernameToDelete = scanner.next();
-                            int userIndexDelete = findUser(users, usernameToDelete);
-                            if (userIndexDelete != -1) {
-                                String[][] newUsers = new String[users.length - 1][2];
-                                for (int i = 0, j = 0; i < users.length; i++) {
-                                    if (i != userIndexDelete) {
-                                        newUsers[j++] = users[i];
-                                    }
-                                }
-                                users = newUsers;
-                                System.out.println("User deleted successfully.");
-                            } else {
-                                System.out.println("User not found.");
-                            }
-                            break;
-                        case 4:
-                            // Change Password
-                            System.out.print("Enter the username of the user to change password: ");
-                            String usernameToChangePassword = scanner.next();
-                            int userIndexPassword = findUser(users, usernameToChangePassword);
-                            if (userIndexPassword != -1) {
-                                System.out.print("Enter new password: ");
-                                String newPassword = scanner.next();
-                                users[userIndexPassword][1] = newPassword;
-                                System.out.println("Password changed successfully.");
-                            } else {
-                                System.out.println("User not found.");
-                            }
-                            break;
-                        case 5:
-                            // Change Username
-                            System.out.print("Enter the username of the user to change username: ");
-                            String usernameToChangeUsername = scanner.next();
-                            int userIndexUsername = findUser(users, usernameToChangeUsername);
-                            if (userIndexUsername != -1) {
-                                System.out.print("Enter new username: ");
-                                String newUsername = scanner.next();
-                                users[userIndexUsername][0] = newUsername;
-                                System.out.println("Username changed successfully.");
-                            } else {
-                                System.out.println("User not found.");
-                            }
-                            break;
-                        case 6:
-                            exit = true; // Logout
-                            break;
-                        default:
-                            System.out.println("Invalid choice. Please enter a valid option.");
-                    }
-                    break;
-                case "Office":
-                    // Handle Office menu options
-                    switch (choice) {
-                        case 1:
-                            // Generate Course Report
-                            // Implement generate course report functionality
-                            break;
-                        case 2:
-                            // Generate Student Report
-                            // Implement generate student report functionality
-                            break;
-                        case 3:
-                            // Generate Lecturer Report
-                            // Implement generate lecturer report functionality
-                            break;
-                        case 4:
-                            // Change Password
-                            // Implement change password functionality
-                            break;
-                        case 5:
-                            // Change Username
-                            // Implement change username functionality
-                            break;
-                        case 6:
-                            exit = true; // Logout
-                            break;
-                        default:
-                            System.out.println("Invalid choice");
-                    }
-                    break;
-                case "Lecturer":
-                    // Handle Lecturer menu options
-                    switch (choice) {
-                        case 1:
-                            // Generate Lecturer Report
-                            // Implement generate lecturer report functionality
-                            break;
-                        case 2:
-                            // Change Password
-                            // Implement change password functionality
-                            break;
-                        case 3:
-                            // Change Username
-                            // Implement change username functionality
-                            break;
-                        case 4:
-                            exit = true; // Logout
-                            break;
-                        default:
-                            System.out.println(
-                                    "Invalid choice. Please enter a valid option."
-                            );
-                    }
-                    break;
-            }
+        switch (role) {
+            case "Admin":
+                adminMenu(scanner);
+                break;
+            case "Office":
+                officeMenu(scanner);
+                break;
+            case "Lecturer":
+                lecturerMenu(scanner);
+                break;
+            default:
+                System.out.println("Invalid role.");
+                userManager.logout();
+                break;
         }
     }
 
-    /**
-     * @param args the command line arguments
-     */
-    public static void main(String[] args) {
-        Connection connection = null; // Declare connection variable
-        Scanner scanner = new Scanner(System.in);
-
-        try {
-            boolean exit = false;
-            while (!exit) {
-                System.out.println("Options:");
-                System.out.println("1. Generate Reports");
-                System.out.println("2. Login");
-                System.out.println("3. Exit");
-                System.out.print("Enter your choice: ");
-                int choice = scanner.nextInt();
-
-                switch (choice) {
-                    case 1:
-                        generateReports(scanner);
-                        break;
-                    case 2:
-                        userLogin(scanner); // I want to call the login admin here
-                        exit = true; // Exit the loop after successful login
-                        break;
-                    case 3:
-                        System.out.println("Exiting...");
-                        exit = true; // Exit the loop when user chooses to exit
-                        break;
-                    default:
-                        System.out.println("Invalid choice. Please enter a valid option.");
-                }
-            }
-        } finally {
-            if (connection != null) {
-                try {
-                    connection.close();
-                } catch (SQLException e) {
-                    System.out.println("Error closing connection: " + e.getMessage());
-                }
-            }
-            scanner.close();
-        }
-    }
-
-    private static void generateReports(Scanner scanner) {
-        System.out.println("Choose a report:");
+    private static void generateReport(Scanner scanner) {
+        /*
+         * TODO: UPDATE THIS FUNCTION SO THAT IT CHECK USERS ROLES AND ONLY ALLOW SPECIFIC REPORTS PER ROLE
+         * ADMIN CANT DO REPORTS
+         * OFFICE CAN GENERATE ALL
+         * LECTURER CAN ONLY DO LECTURES
+         */
+        
+        System.out.println("Select the type of report to generate:");
         System.out.println("1. Course Report");
         System.out.println("2. Student Report");
         System.out.println("3. Lecturer Report");
         System.out.print("Enter your choice: ");
         int reportChoice = scanner.nextInt();
 
+        String tableName;
         switch (reportChoice) {
             case 1:
-                generateReport("courses", scanner);
+                tableName = "courses";
                 break;
             case 2:
-                generateReport("students", scanner);
+                tableName = "students";
                 break;
             case 3:
-                generateReport("lecturer", scanner); // corrected from "lecture" to "lecturer"
+                tableName = "lecturer";
                 break;
             default:
                 System.out.println("Invalid choice. Please enter a valid option.");
+                return;
         }
-    }
 
-    private static void generateReport(String tableName, Scanner scanner) {
         System.out.println("Choose the output format:");
         System.out.println("1. Text File (.txt)");
         System.out.println("2. CSV File (.csv)");
@@ -327,19 +102,17 @@ public class ReportMenu {
         try {
             Connection connection = DBConnector.getConnection(); // Open connection
             Statement statement = connection.createStatement(); // Create stream for the data
-            ResultSet resultSet = statement.executeQuery(
-                    "SELECT * FROM " + tableName
-            ); // Create SQL Query
+            ResultSet resultSet = statement.executeQuery("SELECT * FROM " + tableName); // Execute query
 
             switch (outputChoice) {
                 case 1:
-                    generateTextFile(resultSet, tableName);
+                    reportGenerator.generateTextFile(resultSet, tableName);
                     break;
                 case 2:
-                    generateCSVFile(resultSet, tableName);
+                    reportGenerator.generateCSVFile(resultSet, tableName);
                     break;
                 case 3:
-                    printConsoleOutput(resultSet);
+                    reportGenerator.printConsoleOutput(resultSet);
                     break;
                 default:
                     System.out.println("Invalid choice. Please enter a valid option.");
@@ -348,144 +121,130 @@ public class ReportMenu {
             resultSet.close();
             statement.close();
             connection.close();
-        } catch (SQLException e) {
+        } catch (SQLException | IOException e) {
             System.out.println("Failed to generate report: " + e.getMessage());
         }
     }
 
-    private static void generateTextFile(ResultSet resultSet, String tableName) {
-        try (
-                 PrintWriter writer = new PrintWriter(
-                        new FileWriter(tableName + "_report.txt")
-                )) {
-            ResultSetMetaData metaData = resultSet.getMetaData();
-            int columnCount = metaData.getColumnCount();
-
-            // Write header
-            for (int i = 1; i <= columnCount; i++) {
-                writer.print(metaData.getColumnName(i));
-                if (i < columnCount) {
-                    writer.print("\t");
-                }
+    private static void adminMenu(Scanner scanner) {
+        boolean exit = false;
+        while (!exit) {
+            System.out.println("Admin Menu:");
+            System.out.println("1. Add User");
+            System.out.println("2. Delete User");
+            System.out.println("3. Modify User Role");
+            System.out.println("4. Logout");
+            System.out.println("5. See all the users");
+            System.out.print("Enter your choice: ");
+            int choice = scanner.nextInt();
+            scanner.nextLine(); // consume newline
+            switch (choice) {
+                case 1:
+                    addUser(scanner);
+                    break;
+                case 2:
+                    deleteUser(scanner);
+                    break;
+                case 3:
+                    modifyUserRole(scanner);
+                    break;
+                case 4:
+                    userManager.logout();
+                    return;
+                case 5:
+                    seeAllUsers();
+                    break;
+                    // TODO: ADD THE OPTION TO UPDATE OWN USERNAME AND PASSWORD
+                default:
+                    System.out.println("Invalid choice. Please enter a valid option.");
+                    break;
             }
-            writer.println();
-
-            // Write data
-            while (resultSet.next()) {
-                for (int i = 1; i <= columnCount; i++) {
-                    writer.print(resultSet.getString(i));
-                    if (i < columnCount) {
-                        writer.print("\t");
-                    }
-                }
-                writer.println();
-            }
-            System.out.println("Text file generated successfully.");
-        } catch (IOException | SQLException e) {
-            System.out.println("Failed to generate text file: " + e.getMessage());
         }
     }
 
-    private static void generateCSVFile(ResultSet resultSet, String tableName) {
-        try (
-                 PrintWriter writer = new PrintWriter(
-                        new FileWriter(tableName + "_report.csv")
-                )) {
-            ResultSetMetaData metaData = resultSet.getMetaData();
-            int columnCount = metaData.getColumnCount();
+    private static void officeMenu(Scanner scanner) {
+        boolean exit = false;
+        while (!exit) {
+            System.out.println("Office Menu:");
+            System.out.println("1. Generate Reports");
+            System.out.println("2. Logout");
+            System.out.print("Enter your choice: ");
+            int choice = scanner.nextInt();
+            scanner.nextLine(); // Consume newline
 
-            // Write header
-            for (int i = 1; i <= columnCount; i++) {
-                writer.print(metaData.getColumnName(i));
-                if (i < columnCount) {
-                    writer.print(",");
-                }
+            switch (choice) {
+                case 1:
+                    generateReport(scanner);
+                    break;
+                case 2:
+                    userManager.logout();
+                    exit = true;
+                    break;
+                    // TODO: add option to edit own username and password
+                default:
+                    System.out.println("Invalid choice.");
             }
-            writer.println();
-
-            // Write data
-            while (resultSet.next()) {
-                for (int i = 1; i <= columnCount; i++) {
-                    writer.print(resultSet.getString(i));
-                    if (i < columnCount) {
-                        writer.print(",");
-                    }
-                }
-                writer.println();
-            }
-            System.out.println("CSV file generated successfully.");
-        } catch (IOException | SQLException e) {
-            System.out.println("Failed to generate CSV file: " + e.getMessage());
         }
     }
 
-    private static void printConsoleOutput(ResultSet resultSet) {
-        try {
-            ResultSetMetaData metaData = resultSet.getMetaData();
-            int columnCount = metaData.getColumnCount();
-
-            // Write header
-            for (int i = 1; i <= columnCount; i++) {
-                System.out.print(metaData.getColumnName(i));
-                if (i < columnCount) {
-                    System.out.print("\t");
-                }
-            }
-            System.out.println();
-
-            // Write data
-            while (resultSet.next()) {
-                for (int i = 1; i <= columnCount; i++) {
-                    System.out.print(resultSet.getString(i));
-                    if (i < columnCount) {
-                        System.out.print("\t");
-                    }
-                }
-                System.out.println();
-            }
-        } catch (SQLException e) {
-            System.out.println("Failed to print console output: " + e.getMessage());
+    private static void lecturerMenu(Scanner scanner) {
+        System.out.println("Lecturer Menu:");
+        System.out.println("1. Generate Lecturer Report");
+        System.out.println("2. Logout");
+        System.out.print("Enter your choice: ");
+        int choice = scanner.nextInt();
+        scanner.nextLine(); // consume newline
+        switch (choice) {
+            case 1:
+                System.out.println("Generating lecturer report...");
+                // TODO: Implement report generation logic here
+                break;
+            case 2:
+                userManager.logout();
+                break;
+                // TODO: add option to edit own username and password
+            default:
+                System.out.println("Invalid choice.");
         }
     }
 
-    public static int findUser(String[][] users, String username) {
-        for (int i = 0; i < users.length; i++) {
-            if (users[i][0].equals(username)) {
-                return i;
-            }
-        }
-        return -1;
-
+    private static void addUser(Scanner scanner) {
+        System.out.print("Enter new user's name: ");
+        String username = scanner.next();
+        System.out.print("Enter new user's password: ");
+        String password = scanner.next();
+        System.out.print("Enter new user's role: ");
+        String role = scanner.next();
+        userManager.addUser(username, password, role);
+        System.out.println("User added successfully.");
     }
 
-    static class User {
-
-        private String username;
-        private String password;
-        private String role;
-
-        // TODO: UPDATE THIS CONSTRUCTOR SO THAT IT INCLUDES ROLE
-        public User(String username, String password) {
-            this.username = username;
-            this.password = password;
+    private static void deleteUser(Scanner scanner) {
+        System.out.print("Enter the username of the user to delete: ");
+        String username = scanner.next();
+        if (userManager.deleteUser(username)) {
+            System.out.println("User deleted successfully.");
+        } else {
+            System.out.println("User not found.");
         }
+    }
 
-        public String getUsername() {
-            return username;
+    private static void modifyUserRole(Scanner scanner) {
+        System.out.print("Enter the username of the user to modify the role: ");
+        String username = scanner.next();
+        System.out.print("Enter new user role: ");
+        String newRole = scanner.next();
+        if (userManager.modifyUserRole(username, newRole)) {
+            System.out.println("User role modified successfully.");
+        } else {
+            System.out.println("Username not found.");
         }
+    }
 
-        public String getPassword() {
-            return password;
+    private static void seeAllUsers() {
+        String[][] users = userManager.getUsers();
+        for (String[] user : users) {
+            System.out.println("Username: " + user[0] + ", Role: " + user[2]);
         }
-
-        public void setUsername(String username) {
-            this.username = username;
-        }
-
-        public void setPassword(String password) {
-            this.password = password;
-        }
-        
-        // TODO: CREATE GET AND SET ROLE FUNCTIONS
     }
 }
