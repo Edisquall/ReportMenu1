@@ -3,6 +3,7 @@ package reportmenu;
 import java.util.Arrays;
 
 public class UserManager {
+
     private String[][] users;
     private String currentUser;
 
@@ -77,5 +78,35 @@ public class UserManager {
         return users;
     }
     
-    // TODO: ADD FUNCTION TO ALLOW USERS TO CHANGE THEIR OWN USERNAME AND PASSWORD
+    public String getCurrentUser() {
+        return this.currentUser;
+    }
+    
+    public boolean changeUsername(String oldUsername, String newUsername) {
+        int userIndex = findUserIndex(oldUsername);
+        if (userIndex != -1) {
+            // Check if the new username already exists
+            if (findUserIndex(newUsername) == -1) {
+                this.users[userIndex][0] = newUsername;
+                // Update currentUser if they changed their own username
+                if (this.currentUser.equals(oldUsername)) {
+                    this.currentUser = newUsername;
+                }
+                return true;
+            } else {
+                System.out.println("New username already exists. Please choose a different username.");
+                return false;
+            }
+        }
+        return false;
+    }
+
+    public boolean changePassword(String username, String newPassword) {
+        int userIndex = findUserIndex(username);
+        if (userIndex != -1) {
+            this.users[userIndex][1] = newPassword;
+            return true;
+        }
+        return false;
+    }
 }
